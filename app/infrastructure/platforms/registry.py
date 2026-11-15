@@ -5,6 +5,7 @@ import httpx2
 from app.application.ports import Clock, Publisher
 from app.config import Settings
 from app.infrastructure.platforms.bluesky import BlueskyPublisher
+from app.infrastructure.platforms.github_gist import GithubGistPublisher
 from app.infrastructure.platforms.mastodon import MastodonPublisher
 from app.infrastructure.platforms.telegram import TelegramPublisher
 from app.infrastructure.platforms.unconfigured import UnconfiguredPublisher
@@ -31,6 +32,12 @@ def build_publishers(
             settings.bluesky,
             lambda config: BlueskyPublisher(client, config, clock),
             ("BLUESKY__HANDLE", "BLUESKY__APP_PASSWORD"),
+        ),
+        _configured_or_placeholder(
+            GithubGistPublisher.name,
+            settings.github_gist,
+            lambda config: GithubGistPublisher(client, config),
+            ("GITHUB_GIST__TOKEN",),
         ),
     ]
 
