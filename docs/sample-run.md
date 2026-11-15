@@ -2,7 +2,7 @@
 
 ## Live run
 
-A real run with credentials for GitHub Gist and Telegraph in `.env`. Both posts were published and are publicly reachable, and the other platforms report which settings are missing. Because at least one platform published, the status is `200`.
+A real run with credentials for GitHub Gist, DEV Community and Telegraph in `.env`. All three posts were published and are publicly reachable, and the other platforms report which settings are missing. Because at least one platform published, the status is `200`.
 
 ```text
 $ curl -s -X POST http://localhost:4000/posting -H "Content-Type: application/json" -d '{"message": "Automated multi-platform posting demo built with FastAPI and httpx2. Source code: https://github.com/Vashkatsi/python-post-message"}'
@@ -43,28 +43,28 @@ HTTP 200
     {
       "platform": "GitHub Gist",
       "status": "success",
-      "posted_url": "https://gist.github.com/Vashkatsi/ec675bfce29809a73e94a7e16cf84316",
+      "posted_url": "https://gist.github.com/Vashkatsi/24c5cbc0bd01d395986bdd153eea7939",
       "public_access": true,
       "date": "2026-11-15",
-      "time": "08:58:37",
+      "time": "09:08:11",
       "error": null
     },
     {
       "platform": "DEV Community",
-      "status": "failed",
-      "posted_url": null,
-      "public_access": false,
-      "date": null,
-      "time": null,
-      "error": "Not configured, set DEVTO__API_KEY"
+      "status": "success",
+      "posted_url": "https://dev.to/vashkatsi/automated-multi-platform-posting-demo-built-with-fastapi-and-httpx2-source-code-7n6",
+      "public_access": true,
+      "date": "2026-11-15",
+      "time": "09:08:11",
+      "error": null
     },
     {
       "platform": "Telegraph",
       "status": "success",
-      "posted_url": "https://telegra.ph/Automated-multi-platform-posting-demo-built-with-FastAPI-and-httpx2-Source-code-11-15",
+      "posted_url": "https://telegra.ph/Automated-multi-platform-posting-demo-built-with-FastAPI-and-httpx2-Source-code-11-15-2",
       "public_access": true,
       "date": "2026-11-15",
-      "time": "08:58:37",
+      "time": "09:08:11",
       "error": null
     },
     {
@@ -81,22 +81,25 @@ HTTP 200
 ```
 
 ```text
-INFO:     Started server process [5826]
+INFO:     Started server process [7294]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:4000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:60442 - "GET /openapi.json HTTP/1.1" 200 OK
-INFO:     127.0.0.1:60444 - "POST /posting HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60632 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60634 - "POST /posting HTTP/1.1" 200 OK
 INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [5826]
+INFO:     Finished server process [7294]
 ```
 
 Published posts:
 
-- GitHub Gist: https://gist.github.com/Vashkatsi/ec675bfce29809a73e94a7e16cf84316
-- Telegraph: https://telegra.ph/Automated-multi-platform-posting-demo-built-with-FastAPI-and-httpx2-Source-code-11-15
+- GitHub Gist: https://gist.github.com/Vashkatsi/24c5cbc0bd01d395986bdd153eea7939
+- DEV Community: https://dev.to/vashkatsi/automated-multi-platform-posting-demo-built-with-fastapi-and-httpx2-source-code-7n6
+- Telegraph: https://telegra.ph/Automated-multi-platform-posting-demo-built-with-FastAPI-and-httpx2-Source-code-11-15-2
+
+![DEV Community post](screenshots/live-devto.jpg)
 
 ![Telegraph post](screenshots/live-telegraph.jpg)
 

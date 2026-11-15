@@ -142,12 +142,13 @@ curl -s -X POST http://localhost:4000/posting \
 
 ## Sample run
 
-[docs/sample-run.md](docs/sample-run.md) has a live run that published to GitHub Gist and Telegraph, a run without credentials, the server logs and screenshots.
+[docs/sample-run.md](docs/sample-run.md) has a live run that published to GitHub Gist, DEV Community and Telegraph, a run without credentials, the server logs and screenshots.
 
 Published posts:
 
-- GitHub Gist: https://gist.github.com/Vashkatsi/ec675bfce29809a73e94a7e16cf84316
-- Telegraph: https://telegra.ph/Automated-multi-platform-posting-demo-built-with-FastAPI-and-httpx2-Source-code-11-15
+- GitHub Gist: https://gist.github.com/Vashkatsi/24c5cbc0bd01d395986bdd153eea7939
+- DEV Community: https://dev.to/vashkatsi/automated-multi-platform-posting-demo-built-with-fastapi-and-httpx2-source-code-7n6
+- Telegraph: https://telegra.ph/Automated-multi-platform-posting-demo-built-with-FastAPI-and-httpx2-Source-code-11-15-2
 
 ![Swagger UI](docs/screenshots/swagger-ui.jpg)
 
