@@ -7,6 +7,7 @@ from app.config import Settings
 from app.infrastructure.platforms.bluesky import BlueskyPublisher
 from app.infrastructure.platforms.devto import DevtoPublisher
 from app.infrastructure.platforms.github_gist import GithubGistPublisher
+from app.infrastructure.platforms.huggingface import HuggingFacePublisher
 from app.infrastructure.platforms.mastodon import MastodonPublisher
 from app.infrastructure.platforms.telegram import TelegramPublisher
 from app.infrastructure.platforms.telegraph import TelegraphPublisher
@@ -52,6 +53,12 @@ def build_publishers(
             settings.telegraph,
             lambda config: TelegraphPublisher(client, config),
             ("TELEGRAPH__ACCESS_TOKEN",),
+        ),
+        _configured_or_placeholder(
+            HuggingFacePublisher.name,
+            settings.huggingface,
+            lambda config: HuggingFacePublisher(client, config),
+            ("HUGGINGFACE__TOKEN", "HUGGINGFACE__REPO_ID"),
         ),
     ]
 
