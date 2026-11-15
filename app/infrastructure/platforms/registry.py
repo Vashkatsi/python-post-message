@@ -9,6 +9,7 @@ from app.infrastructure.platforms.devto import DevtoPublisher
 from app.infrastructure.platforms.github_gist import GithubGistPublisher
 from app.infrastructure.platforms.mastodon import MastodonPublisher
 from app.infrastructure.platforms.telegram import TelegramPublisher
+from app.infrastructure.platforms.telegraph import TelegraphPublisher
 from app.infrastructure.platforms.unconfigured import UnconfiguredPublisher
 
 
@@ -45,6 +46,12 @@ def build_publishers(
             settings.devto,
             lambda config: DevtoPublisher(client, config),
             ("DEVTO__API_KEY",),
+        ),
+        _configured_or_placeholder(
+            TelegraphPublisher.name,
+            settings.telegraph,
+            lambda config: TelegraphPublisher(client, config),
+            ("TELEGRAPH__ACCESS_TOKEN",),
         ),
     ]
 
