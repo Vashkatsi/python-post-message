@@ -105,3 +105,11 @@ async def test_access_checker_treats_network_errors_as_not_public(
         await HttpAccessChecker(client, httpx2.Timeout(1)).is_public("https://site.test/post")
         is False
     )
+
+
+async def test_access_checker_treats_malformed_urls_as_not_public(
+    client: httpx2.AsyncClient,
+) -> None:
+    checker = HttpAccessChecker(client, httpx2.Timeout(1))
+
+    assert await checker.is_public("https://\x00example.com") is False

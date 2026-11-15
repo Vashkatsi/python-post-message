@@ -117,3 +117,28 @@ async def test_reports_no_success_when_all_platforms_fail() -> None:
     report = await service.post(MESSAGE)
 
     assert not report.has_any_success
+
+
+@dataclass(frozen=True)
+class BrokenAccessChecker:
+    async def is_public(self, url: str) -> bool:
+        raise ValueError(url)
+
+
+async def test_keeps_every_result_when_the_access_check_breaks() -> None:
+    service = PostingService(
+        publishers=(
+            PublisherStub("Fast", post=PublishedPost("https://fast.test/1")),
+            PublisherStub("Slow", post=PublishedPost("https://slow.test/1"), delay_seconds=0.01),
+        ),
+        access_checker=BrokenAccessChecker(),
+        clock=FixedClock(),
+        publish_timeout_seconds=1,
+    )
+
+    report = await service.post(MESSAGE)
+
+    assert report.results == (
+        PublicationSucceeded("Fast", "https://fast.test/1", False, NOW),
+        PublicationSucceeded("Slow", "https://slow.test/1", False, NOW),
+    )

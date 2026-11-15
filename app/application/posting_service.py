@@ -53,6 +53,12 @@ class PostingService:
         return PublicationSucceeded(
             platform=publisher.name,
             posted_url=post.url,
-            public_access=await self._access_checker.is_public(post.url),
+            public_access=await self._is_public(post.url),
             published_at=(post.published_at or self._clock.now()).astimezone(UTC),
         )
+
+    async def _is_public(self, url: str) -> bool:
+        try:
+            return await self._access_checker.is_public(url)
+        except Exception:
+            return False

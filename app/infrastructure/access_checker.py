@@ -12,5 +12,5 @@ class HttpAccessChecker:
                 "GET", url, follow_redirects=True, timeout=self._timeout
             ) as response:
                 return response.is_success
-        except httpx2.HTTPError:
+        except httpx2.HTTPError, httpx2.InvalidURL:
             return False
