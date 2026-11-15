@@ -1,17 +1,19 @@
-from dataclasses import dataclass
-from datetime import UTC, datetime
+import asyncio
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, ClassVar
 
 import httpx2
 from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
-from app.application.ports import Clock
+from app.application.ports import Clock, PublicationError
 from app.domain.message import Message
 from app.domain.publication import PublishedPost
 from app.infrastructure.http import send_for_model
 
 _POST_COLLECTION = "app.bsky.feed.post"
 _LINK_FEATURE = "app.bsky.richtext.facet#link"
+_SESSION_REUSE_PERIOD = timedelta(minutes=60)
 
 
 class BlueskySettings(BaseModel):
@@ -35,21 +37,52 @@ class _CreatedRecord(BaseModel):
 
 
 @dataclass(frozen=True, slots=True)
+class _CachedSession:
+    session: _Session
+    expires_at: datetime
+
+
+@dataclass(slots=True)
+class BlueskySessionCache:
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    entry: _CachedSession | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class BlueskyPublisher:
     name: ClassVar[str] = "Bluesky"
 
     client: httpx2.AsyncClient
     settings: BlueskySettings
     clock: Clock
+    session_cache: BlueskySessionCache = field(default_factory=BlueskySessionCache)
 
     async def publish(self, message: Message) -> PublishedPost:
-        session = await self._create_session()
+        session = await self._current_session()
         created_at = self.clock.now()
-        record = await self._create_post(session, message, created_at)
+        try:
+            record = await self._create_post(session, message, created_at)
+        except PublicationError:
+            await self._forget_session()
+            raise
         return PublishedPost(
             url=f"https://bsky.app/profile/{session.handle}/post/{record.record_key}",
             published_at=created_at,
         )
+
+    async def _current_session(self) -> _Session:
+        async with self.session_cache.lock:
+            now = self.clock.now()
+            cached = self.session_cache.entry
+            if cached is not None and now < cached.expires_at:
+                return cached.session
+            session = await self._create_session()
+            self.session_cache.entry = _CachedSession(session, now + _SESSION_REUSE_PERIOD)
+            return session
+
+    async def _forget_session(self) -> None:
+        async with self.session_cache.lock:
+            self.session_cache.entry = None
 
     async def _create_session(self) -> _Session:
         request = self.client.build_request(

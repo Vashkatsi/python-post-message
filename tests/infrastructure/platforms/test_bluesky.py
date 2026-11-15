@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import httpx2
 import pytest
@@ -36,14 +36,24 @@ class FixedClock:
         return NOW
 
 
+@dataclass(slots=True)
+class AdjustableClock:
+    moment: datetime
+
+    def now(self) -> datetime:
+        return self.moment
+
+
+SETTINGS = BlueskySettings(
+    handle="alice.bsky.social",
+    app_password=SecretStr("abcd-efgh-ijkl-mnop"),
+    service_url="https://pds.example",
+)
+
+
 @pytest.fixture
 def publisher(client: httpx2.AsyncClient) -> BlueskyPublisher:
-    settings = BlueskySettings(
-        handle="alice.bsky.social",
-        app_password=SecretStr("abcd-efgh-ijkl-mnop"),
-        service_url="https://pds.example",
-    )
-    return BlueskyPublisher(client, settings, FixedClock())
+    return BlueskyPublisher(client, SETTINGS, FixedClock())
 
 
 @respx.mock
@@ -130,3 +140,35 @@ async def test_rejects_unexpected_record_uri(publisher: BlueskyPublisher) -> Non
 
     with pytest.raises(PublicationError, match="Unexpected response format"):
         await publisher.publish(MESSAGE)
+
+
+@respx.mock
+async def test_reuses_the_session_until_it_should_be_renewed(client: httpx2.AsyncClient) -> None:
+    session_route = respx.post(SESSION_ENDPOINT).respond(200, json=SESSION)
+    respx.post(RECORD_ENDPOINT).respond(200, json=CREATED_RECORD)
+    clock = AdjustableClock(NOW)
+    publisher = BlueskyPublisher(client, SETTINGS, clock)
+
+    await publisher.publish(MESSAGE)
+    clock.moment = NOW + timedelta(minutes=59)
+    await publisher.publish(MESSAGE)
+    assert session_route.call_count == 1
+
+    clock.moment = NOW + timedelta(minutes=61)
+    await publisher.publish(MESSAGE)
+    assert session_route.call_count == 2
+
+
+@respx.mock
+async def test_logs_in_again_after_a_rejected_record(publisher: BlueskyPublisher) -> None:
+    session_route = respx.post(SESSION_ENDPOINT).respond(200, json=SESSION)
+    record_route = respx.post(RECORD_ENDPOINT).respond(
+        400, json={"error": "ExpiredToken", "message": "Token has expired"}
+    )
+
+    with pytest.raises(PublicationError, match="Token has expired"):
+        await publisher.publish(MESSAGE)
+    record_route.respond(200, json=CREATED_RECORD)
+    await publisher.publish(MESSAGE)
+
+    assert session_route.call_count == 2
