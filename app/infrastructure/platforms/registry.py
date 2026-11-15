@@ -4,6 +4,7 @@ import httpx2
 
 from app.application.ports import Clock, Publisher
 from app.config import Settings
+from app.infrastructure.platforms.bluesky import BlueskyPublisher
 from app.infrastructure.platforms.mastodon import MastodonPublisher
 from app.infrastructure.platforms.telegram import TelegramPublisher
 from app.infrastructure.platforms.unconfigured import UnconfiguredPublisher
@@ -24,6 +25,12 @@ def build_publishers(
             settings.telegram,
             lambda config: TelegramPublisher(client, config),
             ("TELEGRAM__BOT_TOKEN", "TELEGRAM__CHANNEL_USERNAME"),
+        ),
+        _configured_or_placeholder(
+            BlueskyPublisher.name,
+            settings.bluesky,
+            lambda config: BlueskyPublisher(client, config, clock),
+            ("BLUESKY__HANDLE", "BLUESKY__APP_PASSWORD"),
         ),
     ]
 
