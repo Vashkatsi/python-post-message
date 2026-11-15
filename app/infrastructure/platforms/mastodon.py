@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import ClassVar
@@ -34,7 +35,7 @@ class MastodonPublisher:
             httpx2.URL(str(self.settings.base_url)).join("/api/v1/statuses"),
             headers={
                 "Authorization": f"Bearer {self.settings.access_token.get_secret_value()}",
-                "Idempotency-Key": message.fingerprint,
+                "Idempotency-Key": str(uuid.uuid4()),
             },
             json={"status": message.text, "visibility": "public"},
         )

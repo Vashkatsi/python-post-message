@@ -43,8 +43,27 @@ async def test_publishes_public_status(publisher: MastodonPublisher) -> None:
     )
     request = route.calls.last.request
     assert request.headers["Authorization"] == "Bearer token"
-    assert request.headers["Idempotency-Key"] == MESSAGE.fingerprint
     assert json.loads(request.content) == {"status": MESSAGE.text, "visibility": "public"}
+
+
+@respx.mock
+async def test_sends_a_new_idempotency_key_for_each_publication(
+    publisher: MastodonPublisher,
+) -> None:
+    route = respx.post(ENDPOINT).respond(
+        200,
+        json={
+            "url": None,
+            "uri": "https://mastodon.example/1",
+            "created_at": "2026-11-15T10:21:07Z",
+        },
+    )
+
+    await publisher.publish(MESSAGE)
+    await publisher.publish(MESSAGE)
+
+    first, second = (call.request.headers["Idempotency-Key"] for call in route.calls)
+    assert first != second
 
 
 @respx.mock
