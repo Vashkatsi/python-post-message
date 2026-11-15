@@ -60,3 +60,16 @@ def test_fingerprint_is_stable_for_the_same_text() -> None:
 
     assert first.fingerprint == second.fingerprint
     assert first.fingerprint != Message("Bye https://example.com").fingerprint
+
+
+@pytest.mark.parametrize(
+    ("text", "headline"),
+    [
+        ("Grow your   visibility: https://example.com", "Grow your visibility"),
+        ("Read https://example.com/a today.", "Read today"),
+        ("Visit (https://example.com), please", "Visit please"),
+        ("- https://www.example.com -", "www.example.com"),
+    ],
+)
+def test_headline_is_the_text_without_the_link(text: str, headline: str) -> None:
+    assert Message(text).headline == headline

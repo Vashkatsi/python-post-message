@@ -7,6 +7,7 @@ MAX_MESSAGE_LENGTH = 200
 
 _LINK_CANDIDATE = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
 _TRAILING_PUNCTUATION = ".,;:!?)]}'\""
+_HEADLINE_EDGE_CHARACTERS = " .,:;-|/"
 _HOSTNAME = re.compile(
     r"^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$",
     re.IGNORECASE,
@@ -32,6 +33,15 @@ class Message:
             )
         object.__setattr__(self, "text", text)
         object.__setattr__(self, "cta_url", _extract_single_cta_url(text))
+
+    @property
+    def headline(self) -> str:
+        text_without_link = " ".join(word for word in self.text.split() if self.cta_url not in word)
+        return (
+            text_without_link.strip(_HEADLINE_EDGE_CHARACTERS)
+            or urlsplit(self.cta_url).hostname
+            or self.cta_url
+        )
 
     @property
     def fingerprint(self) -> str:
