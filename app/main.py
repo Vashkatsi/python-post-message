@@ -19,12 +19,13 @@ class AppState(TypedDict):
 
 
 def build_posting_service(settings: Settings, client: httpx2.AsyncClient) -> PostingService:
+    clock = SystemClock()
     return PostingService(
-        publishers=build_publishers(settings, client),
+        publishers=build_publishers(settings, client, clock),
         access_checker=HttpAccessChecker(
             client, httpx2.Timeout(settings.access_check_timeout_seconds)
         ),
-        clock=SystemClock(),
+        clock=clock,
         publish_timeout_seconds=settings.publish_timeout_seconds,
     )
 

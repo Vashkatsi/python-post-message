@@ -4,6 +4,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.infrastructure.platforms.mastodon import MastodonSettings
+from app.infrastructure.platforms.telegram import TelegramSettings
 
 
 class Settings(BaseSettings):
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     access_check_timeout_seconds: float = Field(default=10, gt=0)
 
     mastodon: MastodonSettings | None = None
+    telegram: TelegramSettings | None = None
 
 
 @lru_cache
