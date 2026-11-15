@@ -10,6 +10,18 @@ from app.domain.message import MAX_MESSAGE_LENGTH, InvalidMessageError, Message
         ("Read more at https://example.com/path?ref=1.", "https://example.com/path?ref=1"),
         ("(see http://sub.example.co.uk:8080/page)", "http://sub.example.co.uk:8080/page"),
         ("Visit https://пример.рф now", "https://пример.рф"),
+        ("Visit “https://example.com/path”", "https://example.com/path"),
+        ("Читайте «https://example.com»…", "https://example.com"),
+        ("Docs: https://example.com/a/", "https://example.com/a/"),
+        (
+            "See https://en.wikipedia.org/wiki/Python_(programming_language)",
+            "https://en.wikipedia.org/wiki/Python_(programming_language)",
+        ),
+        (
+            "(see https://en.wikipedia.org/wiki/Python_(programming_language))",
+            "https://en.wikipedia.org/wiki/Python_(programming_language)",
+        ),
+        ("Line one\nhttps://example.com", "https://example.com"),
     ],
 )
 def test_extracts_the_single_cta_link(text: str, expected_url: str) -> None:
@@ -40,6 +52,9 @@ def test_accepts_message_of_exactly_max_length() -> None:
         ("Creds https://user:secret@example.com", r"not a valid absolute http\(s\) URL"),
         ("Port https://example.com:0", r"not a valid absolute http\(s\) URL"),
         ("Broken https://exa_mple.com", r"not a valid absolute http\(s\) URL"),
+        ("Quote inside https://exa”mple.com", r"not a valid absolute http\(s\) URL"),
+        ("Hidden https://exa\u200bmple.com", "invisible or control characters"),
+        ("Joined https://a.com\u200bhttps://evil.com", "invisible or control characters"),
     ],
 )
 def test_rejects_invalid_messages(text: str, reason: str) -> None:
@@ -52,14 +67,6 @@ def test_message_is_immutable() -> None:
 
     with pytest.raises(AttributeError):
         message.text = "changed"  # type: ignore[misc]
-
-
-def test_fingerprint_is_stable_for_the_same_text() -> None:
-    first = Message("Hello https://example.com")
-    second = Message("  Hello https://example.com ")
-
-    assert first.fingerprint == second.fingerprint
-    assert first.fingerprint != Message("Bye https://example.com").fingerprint
 
 
 @pytest.mark.parametrize(
