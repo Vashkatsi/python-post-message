@@ -140,6 +140,9 @@ async def test_rejects_malformed_json(client: httpx2.AsyncClient) -> None:
     )
 
     assert response.status_code == 422
+    assert response.json() == {
+        "detail": [{"field": "body", "message": "Invalid JSON at position 1"}]
+    }
 
 
 async def test_documents_the_endpoint(client: httpx2.AsyncClient) -> None:
