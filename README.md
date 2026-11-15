@@ -1,5 +1,7 @@
 # Automated Multi-Platform Posting
 
+[![CI](https://github.com/Vashkatsi/python-post-message/actions/workflows/ci.yml/badge.svg)](https://github.com/Vashkatsi/python-post-message/actions/workflows/ci.yml)
+
 A FastAPI service that takes one short message with a call to action link and publishes it to seven platforms at once through their official APIs. Each platform runs on its own: if one fails, the others still post, and the response reports every platform separately.
 
 | Platform | API | What gets created |
