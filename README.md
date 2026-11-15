@@ -168,3 +168,23 @@ The tests do not touch the network. Platform APIs are mocked with respx, and the
 - **Time is taken from the platform** when its reply has one (Mastodon, Telegram, GitHub, DEV), otherwise from the server clock at the moment of publishing.
 - **Project layout.** The task suggests `app/platforms`, `app/services` and `app/schemas.py`. The same parts exist here as `app/infrastructure/platforms`, `app/application` and `app/api/schemas.py`, split into layers so the business logic does not depend on FastAPI or HTTP.
 - **httpx2 instead of httpx.** httpx2 has the same API, and Starlette now recommends it. respx still imports `httpx`, so the tests alias it to httpx2 first (see `docs/lessons.md`).
+
+## Gaps in the assignment and how they were resolved
+
+The assignment leaves several points open or contradicts itself. Each one needed a decision, listed here.
+
+| Gap in the assignment | Decision |
+|---|---|
+| It asks for "LLM platforms", but ChatGPT, Claude or Gemini have no API to publish public content, so there would be no `posted_url` or `public_access`. | Hugging Face Hub discussions. The Hub is the main public platform of the LLM community, and a discussion has a public URL. |
+| Many well known platforms are closed for this use case: X needs a paid API plan, LinkedIn and Facebook need app review, and Medium no longer issues API tokens. | Seven platforms with a free, documented write API and public URLs: Mastodon, Telegram, Bluesky, GitHub Gist, DEV Community, Telegraph and Hugging Face. |
+| The example response has `"success": true` while one platform failed, but the meaning of `success` and the HTTP status when every platform fails are not defined. | `success` is `true` when at least one platform published. When none did, the body is the same and the status is `502`. |
+| The table says `Success / Failed`, the JSON example uses `success / failed`. | Lowercase, as in the JSON example. |
+| `date` and `time` have no time zone, and it is not said whether a failed attempt gets a time. | UTC, taken from the platform reply when it has one. A failed result has `null`, as in the example. |
+| `public_access` is required, but there is no rule for how to find it. | An anonymous `GET` of the posted URL after publishing, following redirects. Only a `2xx` reply counts as public, and a failed check never turns a published post into a failure. |
+| "Exactly one CTA link" does not say what counts as a link. | Anything starting with `http://`, `https://` or `www.` counts. The link must be an absolute `http` or `https` URL with a real hostname. Bare domains such as `example.com` are text, because counting them would also reject words like `node.js`. |
+| "Must not exceed 200 characters" does not say how characters are counted, and platforms count differently (X counts a link as 23 characters, Bluesky counts graphemes). | Unicode code points after trimming spaces at the edges. 200 is below the limit of every chosen platform. |
+| The format of validation errors is not defined. | `422` with a list of `{"field", "message"}` items and readable messages. |
+| The suggested structure has three platform files, while at least five platforms are required. | Seven adapters in `app/infrastructure/platforms`, with the same parts as the suggested layout split into layers (see Design decisions). |
+| It asks for real results but forbids committing credentials, so a reviewer cannot run the integrations as they are. | `.env.example` lists every variable, and the README explains how to get each credential. A platform without credentials stays in the response as `Not configured, set ...` instead of breaking the app. [docs/sample-run.md](docs/sample-run.md) shows a real run. |
+| Retries and duplicate posts are not mentioned, but repeating a publish request can create a second post. | No automatic retries of publishing. Only connection errors are retried, because at that point nothing has been sent. |
+| The time limit is "2-3 hours" in the header and "4 hours" in the submission section. | Not relevant to the implementation. Noted only for completeness. |
