@@ -5,6 +5,7 @@ import httpx2
 from app.application.ports import Clock, Publisher
 from app.config import Settings
 from app.infrastructure.platforms.bluesky import BlueskyPublisher
+from app.infrastructure.platforms.devto import DevtoPublisher
 from app.infrastructure.platforms.github_gist import GithubGistPublisher
 from app.infrastructure.platforms.mastodon import MastodonPublisher
 from app.infrastructure.platforms.telegram import TelegramPublisher
@@ -38,6 +39,12 @@ def build_publishers(
             settings.github_gist,
             lambda config: GithubGistPublisher(client, config),
             ("GITHUB_GIST__TOKEN",),
+        ),
+        _configured_or_placeholder(
+            DevtoPublisher.name,
+            settings.devto,
+            lambda config: DevtoPublisher(client, config),
+            ("DEVTO__API_KEY",),
         ),
     ]
 

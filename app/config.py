@@ -4,6 +4,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.infrastructure.platforms.bluesky import BlueskySettings
+from app.infrastructure.platforms.devto import DevtoSettings
 from app.infrastructure.platforms.github_gist import GithubGistSettings
 from app.infrastructure.platforms.mastodon import MastodonSettings
 from app.infrastructure.platforms.telegram import TelegramSettings
@@ -24,6 +25,7 @@ class Settings(BaseSettings):
     access_check_timeout_seconds: float = Field(default=10, gt=0)
 
     mastodon: MastodonSettings | None = None
+    devto: DevtoSettings | None = None
     github_gist: GithubGistSettings | None = None
     bluesky: BlueskySettings | None = None
     telegram: TelegramSettings | None = None
