@@ -134,6 +134,13 @@ Fill in `.env` for the platforms you want. Nested settings use a double undersco
 uv run uvicorn app.main:app --host 0.0.0.0 --port 4000
 ```
 
+With Docker:
+
+```bash
+docker build -t automated-posting .
+docker run --rm -p 4000:4000 --env-file .env automated-posting
+```
+
 API docs: http://localhost:4000/docs
 
 ```bash
