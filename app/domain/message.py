@@ -1,3 +1,4 @@
+import hashlib
 import re
 from dataclasses import dataclass, field
 from urllib.parse import urlsplit
@@ -31,6 +32,10 @@ class Message:
             )
         object.__setattr__(self, "text", text)
         object.__setattr__(self, "cta_url", _extract_single_cta_url(text))
+
+    @property
+    def fingerprint(self) -> str:
+        return hashlib.sha256(self.text.encode()).hexdigest()
 
 
 def _extract_single_cta_url(text: str) -> str:

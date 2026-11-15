@@ -52,3 +52,11 @@ def test_message_is_immutable() -> None:
 
     with pytest.raises(AttributeError):
         message.text = "changed"  # type: ignore[misc]
+
+
+def test_fingerprint_is_stable_for_the_same_text() -> None:
+    first = Message("Hello https://example.com")
+    second = Message("  Hello https://example.com ")
+
+    assert first.fingerprint == second.fingerprint
+    assert first.fingerprint != Message("Bye https://example.com").fingerprint
