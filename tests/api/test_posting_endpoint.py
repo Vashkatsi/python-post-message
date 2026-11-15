@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
-import httpx
+import httpx2
 import pytest
 
 from app.api.dependencies import get_posting_service
@@ -28,10 +28,10 @@ class PostingServiceStub(PostingService):
         return PublicationReport(self.results)
 
 
-def api_client(service: PostingService) -> httpx.AsyncClient:
+def api_client(service: PostingService) -> httpx2.AsyncClient:
     app = create_app()
     app.dependency_overrides[get_posting_service] = lambda: service
-    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
+    return httpx2.AsyncClient(transport=httpx2.ASGITransport(app=app), base_url="http://test")
 
 
 @pytest.fixture
@@ -50,13 +50,13 @@ def mixed_service() -> PostingServiceStub:
 
 
 @pytest.fixture
-async def client(mixed_service: PostingServiceStub) -> AsyncIterator[httpx.AsyncClient]:
+async def client(mixed_service: PostingServiceStub) -> AsyncIterator[httpx2.AsyncClient]:
     async with api_client(mixed_service) as http_client:
         yield http_client
 
 
 async def test_returns_per_platform_results(
-    client: httpx.AsyncClient, mixed_service: PostingServiceStub
+    client: httpx2.AsyncClient, mixed_service: PostingServiceStub
 ) -> None:
     response = await client.post("/posting", json={"message": f"  {VALID_MESSAGE} "})
 
@@ -121,7 +121,7 @@ async def test_returns_bad_gateway_when_every_platform_fails() -> None:
     ],
 )
 async def test_rejects_invalid_input(
-    client: httpx.AsyncClient,
+    client: httpx2.AsyncClient,
     mixed_service: PostingServiceStub,
     payload: dict[str, object],
     field: str,
@@ -134,7 +134,7 @@ async def test_rejects_invalid_input(
     assert mixed_service.received == []
 
 
-async def test_rejects_malformed_json(client: httpx.AsyncClient) -> None:
+async def test_rejects_malformed_json(client: httpx2.AsyncClient) -> None:
     response = await client.post(
         "/posting", content=b"{not json", headers={"Content-Type": "application/json"}
     )
@@ -142,7 +142,7 @@ async def test_rejects_malformed_json(client: httpx.AsyncClient) -> None:
     assert response.status_code == 422
 
 
-async def test_documents_the_endpoint(client: httpx.AsyncClient) -> None:
+async def test_documents_the_endpoint(client: httpx2.AsyncClient) -> None:
     schema = (await client.get("/openapi.json")).json()
 
     operation = schema["paths"]["/posting"]["post"]

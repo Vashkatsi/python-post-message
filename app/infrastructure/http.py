@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 from pydantic import BaseModel, ValidationError
 
 from app.application.ports import PublicationError
@@ -8,13 +8,13 @@ _MAX_DETAIL_LENGTH = 300
 
 
 async def send_for_model[ModelT: BaseModel](
-    client: httpx.AsyncClient, request: httpx.Request, model: type[ModelT]
+    client: httpx2.AsyncClient, request: httpx2.Request, model: type[ModelT]
 ) -> ModelT:
     try:
         response = await client.send(request)
-    except httpx.TimeoutException as error:
+    except httpx2.TimeoutException as error:
         raise PublicationError("Platform did not respond in time") from error
-    except httpx.TransportError as error:
+    except httpx2.TransportError as error:
         raise PublicationError(f"Network error: {type(error).__name__}") from error
     if not response.is_success:
         raise PublicationError(describe_failure(response))
@@ -24,14 +24,14 @@ async def send_for_model[ModelT: BaseModel](
         raise PublicationError("Unexpected response format from platform") from error
 
 
-def describe_failure(response: httpx.Response) -> str:
+def describe_failure(response: httpx2.Response) -> str:
     detail = _extract_detail(response)
     match response.status_code:
-        case httpx.codes.UNAUTHORIZED | httpx.codes.FORBIDDEN:
+        case httpx2.codes.UNAUTHORIZED | httpx2.codes.FORBIDDEN:
             summary = "Authentication failed"
-        case httpx.codes.TOO_MANY_REQUESTS:
+        case httpx2.codes.TOO_MANY_REQUESTS:
             summary = "Rate limit exceeded"
-        case status if status >= httpx.codes.INTERNAL_SERVER_ERROR:
+        case status if status >= httpx2.codes.INTERNAL_SERVER_ERROR:
             summary = "Platform is unavailable"
         case _:
             summary = "Request rejected"
@@ -39,7 +39,7 @@ def describe_failure(response: httpx.Response) -> str:
     return f"{summary} (HTTP {response.status_code}){suffix}"
 
 
-def _extract_detail(response: httpx.Response) -> str:
+def _extract_detail(response: httpx2.Response) -> str:
     try:
         payload = response.json()
     except ValueError:

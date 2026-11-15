@@ -1,8 +1,8 @@
-import httpx
+import httpx2
 
 
 class HttpAccessChecker:
-    def __init__(self, client: httpx.AsyncClient, timeout: httpx.Timeout) -> None:
+    def __init__(self, client: httpx2.AsyncClient, timeout: httpx2.Timeout) -> None:
         self._client = client
         self._timeout = timeout
 
@@ -12,5 +12,5 @@ class HttpAccessChecker:
                 "GET", url, follow_redirects=True, timeout=self._timeout
             ) as response:
                 return response.is_success
-        except httpx.HTTPError:
+        except httpx2.HTTPError:
             return False

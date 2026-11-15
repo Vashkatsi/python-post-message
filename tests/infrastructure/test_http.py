@@ -1,6 +1,6 @@
 import re
 
-import httpx
+import httpx2
 import pytest
 import respx
 from pydantic import BaseModel
@@ -17,7 +17,7 @@ class Created(BaseModel):
 
 
 @respx.mock
-async def test_parses_successful_response(client: httpx.AsyncClient) -> None:
+async def test_parses_successful_response(client: httpx2.AsyncClient) -> None:
     respx.post(URL).respond(201, json={"id": 7, "extra": "ignored"})
 
     created = await send_for_model(client, client.build_request("POST", URL), Created)
@@ -41,7 +41,7 @@ async def test_parses_successful_response(client: httpx.AsyncClient) -> None:
 )
 @respx.mock
 async def test_describes_http_failures(
-    client: httpx.AsyncClient, status: int, body: dict[str, str], expected: str
+    client: httpx2.AsyncClient, status: int, body: dict[str, str], expected: str
 ) -> None:
     respx.post(URL).respond(status, json=body)
 
@@ -50,7 +50,7 @@ async def test_describes_http_failures(
 
 
 @respx.mock
-async def test_reports_plain_text_failure(client: httpx.AsyncClient) -> None:
+async def test_reports_plain_text_failure(client: httpx2.AsyncClient) -> None:
     respx.post(URL).respond(400, text="  bad input  ")
 
     with pytest.raises(PublicationError, match=r"bad input$"):
@@ -58,23 +58,23 @@ async def test_reports_plain_text_failure(client: httpx.AsyncClient) -> None:
 
 
 @respx.mock
-async def test_reports_network_errors(client: httpx.AsyncClient) -> None:
-    respx.post(URL).mock(side_effect=httpx.ConnectError("refused"))
+async def test_reports_network_errors(client: httpx2.AsyncClient) -> None:
+    respx.post(URL).mock(side_effect=httpx2.ConnectError("refused"))
 
     with pytest.raises(PublicationError, match="Network error: ConnectError"):
         await send_for_model(client, client.build_request("POST", URL), Created)
 
 
 @respx.mock
-async def test_reports_timeouts(client: httpx.AsyncClient) -> None:
-    respx.post(URL).mock(side_effect=httpx.ReadTimeout("slow"))
+async def test_reports_timeouts(client: httpx2.AsyncClient) -> None:
+    respx.post(URL).mock(side_effect=httpx2.ReadTimeout("slow"))
 
     with pytest.raises(PublicationError, match="did not respond in time"):
         await send_for_model(client, client.build_request("POST", URL), Created)
 
 
 @respx.mock
-async def test_reports_unexpected_payload(client: httpx.AsyncClient) -> None:
+async def test_reports_unexpected_payload(client: httpx2.AsyncClient) -> None:
     respx.post(URL).respond(200, json={"unexpected": True})
 
     with pytest.raises(PublicationError, match="Unexpected response format"):
@@ -84,24 +84,24 @@ async def test_reports_unexpected_payload(client: httpx.AsyncClient) -> None:
 @pytest.mark.parametrize(("status", "expected"), [(200, True), (404, False), (403, False)])
 @respx.mock
 async def test_access_checker_follows_redirects_and_checks_status(
-    client: httpx.AsyncClient, status: int, expected: bool
+    client: httpx2.AsyncClient, status: int, expected: bool
 ) -> None:
     respx.get("https://site.test/short").respond(
         302, headers={"Location": "https://site.test/post"}
     )
     respx.get("https://site.test/post").respond(status)
-    checker = HttpAccessChecker(client, httpx.Timeout(1))
+    checker = HttpAccessChecker(client, httpx2.Timeout(1))
 
     assert await checker.is_public("https://site.test/short") is expected
 
 
 @respx.mock
 async def test_access_checker_treats_network_errors_as_not_public(
-    client: httpx.AsyncClient,
+    client: httpx2.AsyncClient,
 ) -> None:
-    respx.get("https://site.test/post").mock(side_effect=httpx.ConnectError("refused"))
+    respx.get("https://site.test/post").mock(side_effect=httpx2.ConnectError("refused"))
 
     assert (
-        await HttpAccessChecker(client, httpx.Timeout(1)).is_public("https://site.test/post")
+        await HttpAccessChecker(client, httpx2.Timeout(1)).is_public("https://site.test/post")
         is False
     )

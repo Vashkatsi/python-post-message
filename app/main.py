@@ -2,7 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import TypedDict
 
-import httpx
+import httpx2
 from fastapi import FastAPI
 
 from app.api.errors import register_error_handlers
@@ -18,11 +18,11 @@ class AppState(TypedDict):
     posting_service: PostingService
 
 
-def build_posting_service(settings: Settings, client: httpx.AsyncClient) -> PostingService:
+def build_posting_service(settings: Settings, client: httpx2.AsyncClient) -> PostingService:
     return PostingService(
         publishers=build_publishers(settings, client),
         access_checker=HttpAccessChecker(
-            client, httpx.Timeout(settings.access_check_timeout_seconds)
+            client, httpx2.Timeout(settings.access_check_timeout_seconds)
         ),
         clock=SystemClock(),
         publish_timeout_seconds=settings.publish_timeout_seconds,
@@ -32,9 +32,9 @@ def build_posting_service(settings: Settings, client: httpx.AsyncClient) -> Post
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[AppState]:
     settings = get_settings()
-    async with httpx.AsyncClient(
-        timeout=httpx.Timeout(settings.http_timeout_seconds),
-        transport=httpx.AsyncHTTPTransport(retries=1),
+    async with httpx2.AsyncClient(
+        timeout=httpx2.Timeout(settings.http_timeout_seconds),
+        transport=httpx2.AsyncHTTPTransport(retries=1),
         headers={"User-Agent": "automated-posting/0.1"},
     ) as client:
         yield {"posting_service": build_posting_service(settings, client)}
